@@ -1,0 +1,11 @@
+data
+.DS_Store
+mrbase.oauth
+results
+report/report.docx
+report/EWAS_GWAS_overlap_meeting_report_140819.docx
+report/paper_outline1.docx
+presentations/
+shell/submission_scripts/
+reproducible_simulation_code/
+report/
