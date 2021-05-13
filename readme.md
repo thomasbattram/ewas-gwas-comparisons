@@ -1,5 +1,14 @@
 # A comparison of EWAS and GWAS signal
 
+## GitHub/lab notes
+
+If pushing to private gitlab directory make sure to be in the "master" branch and push to "origin"
+If pushing to public github directory make sure to be in the "public" branch and push to "github" like so 
+
+`
+git push github public:master
+`
+
 ## Aims
 1. Compare the regions identified by GWAS and EWAS
 2. Assess if the genes/pathways identified by GWAS are also identified by EWAS more than expected by chance
@@ -59,3 +68,7 @@ If updating the data for a trait (e.g. if a new EWAS/GWAS of BMI comes out) will
 * Learn how to change the figure caption settings (want caption to start with Supplementary figure, not Figure in supplementary material).
 * Find a more automated way of creating supplementary tables...
 * Add in supplementary tables
+
+
+
+
