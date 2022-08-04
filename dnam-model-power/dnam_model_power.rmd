@@ -1,0 +1,109 @@
+---
+title: "EWAS architecture and power"
+output: html_notebook
+---
+
+EWAS associations in which methylation levels associate with complex traits can arise due to (1) forward causality, (2) reverse causality or (3) confounding. Each of these models is subject to different constraints under a multi-factorial model of complex traits. Suppose that our complex trait $y$ has $P_y$ factors and a methylation site $m_j$ is influenced by $P_{m_j}$ factors. Though methylation sites are known to be multi-factorial themselves, in general we would consider that $P_y \gg P_{m_j}$. 
+
+If you have $P$ factors that influence a value $y$ then they have the following constraint
+
+$$
+R^2_T = \sum^P_{j=1} R^2_{m_jy} \leq 1
+$$
+
+In principle the variance not captured by $R^2_{m_jy}$ is basically stochastic noise. Therefore the larger the value of $P$, the smaller the value that $R^2_{m_jy}$ can take, and the lower the power to detect any factor for $y$. Suppose that $Var(y) = 1$ and $Var(m_j) = 1$ then $\beta_{m_jy} \sim N(0, R^2_T/P)$. 
+
+## Models
+
+### Forward causal
+
+If all CpG-trait associations are due to CpGs being causal then they are amongst the $P_y$ causal factors for $y$ then the effects are constrained to be drawn from $\beta_{m_jy} \sim N(0, R^2_{T_y}/P_y)$. So $R^2_{m_jy}(1) = \beta_{m_jy}^2$.
+
+### Reverse causal
+
+If all CpG-trait associations are reverse causal, then each CpG is independently influenced by $y$ with an effect of $\beta_{ym_j} \sim N(0, R^2_{T_{m_j}}/P_{m_j})$. So $R^2_{m_jy}(2) = \beta_{ym_j}^2$
+
+### Confounded 
+
+If all CpG-trait associations are confounded then each CpG is independently influenced by some confounder $u$ that also influences $y$. So the effect of $u$ on $m_j$ is subject to the constraint in (2) and the effect of $u$ on $y$ is subject to the constraint in (1). 
+
+$$
+\begin{aligned}
+R^2_{m_jy}(3) & = \frac{Cov(m_j, y)^2} {Var(m_j)Var(y)} \\
+& = Cov(\beta_{um_j}u, \beta_{uy}u)^2 \\
+& = Var(u)^2\beta_{um_j}^2\beta_{uy}^2 \\
+& = \beta_{um_j}^2\beta_{uy}^2
+\end{aligned}
+$$
+Assume the variance of $u$ is 1, overall the expected association will be $R^2_{m_jy}(3) = \beta_{uy}^2\beta_{um_j}^2$. 
+
+### Expected number of associations in EWAS
+
+Statistical power of EWAS is basically just related to variance in the trait explained by the CpG ($R^2_{m_jy}$) and the sample size ($N$). For $P_y$ DNAm sites that relate to $y$ the number expected to be associated is simply the sum of the power across all sites.
+
+## Simulations
+
+Generate a function that will estimate the expected number of associations for each of the three models
+
+```{r}
+library(pwr)
+library(dplyr)
+library(ggplot2)
+
+calc_power <- function(Pm, Py, R2m, R2y, N, thresh)
+{
+  # Model 1
+  b1 <- rnorm(Py, mean=0, sd=sqrt(R2y/Py))
+  pow1 <- pwr.r.test(N, b1, thresh)$power
+  nsig1 <- sum(pow1)
+  
+  # Model 2
+  b2 <- rnorm(Py, mean=0, sd=sqrt(R2m/Pm))
+  pow2 <- pwr.r.test(N, b2, thresh)$power
+  nsig2 <- sum(pow2)
+  
+  # Model 3
+  b3 <- b1 * b2
+  pow3 <- pwr.r.test(n=N, r=b3, sig.level=thresh)$power
+  nsig3 <- sum(pow3)
+  
+  return(tibble(
+    Pm=Pm, Py=Py, R2m=R2m, R2y=R2y, N=N, thresh=thresh, model=c("Forward causal", "Reverse causal", "Counfounded"), nsig=c(nsig1, nsig2, nsig3)
+  ))
+}
+```
+
+Set the parameters across which the simulations will run
+
+```{r, warning=FALSE}
+
+param <- expand.grid(
+  Pm = c(5, 50, 500),
+  Py = seq(500, 10000, by=500),
+  R2m = c(0.02, 0.2, 0.8),
+  R2y = c(0.3, 0.5, 0.7),
+  N = c(1000, 10000, 100000),
+  thresh=5e-7
+)
+res <- lapply(1:nrow(param), function(i) do.call(calc_power, param[i,])) %>% bind_rows()
+```
+
+Visualise the expected yield of associations from each model
+
+```{r}
+subset(res, R2m == 0.2 & R2y == 0.5) %>%
+ggplot(., aes(x=Py, y=nsig)) +
+  geom_line(aes(colour=as.factor(model))) +
+  facet_grid(N ~ Pm, labeller=label_both) +
+  scale_y_log10() +
+  geom_hline(yintercept=1, linetype="dotted") +
+  scale_colour_brewer(type="qual") +
+  labs(x="Number of causal factors for Y (Py)", y="Expected number of associations", colour="Model")
+```
+
+Figure description: Each box represents the expected number of EWAS associations (y-axis, note the log scale) against how multi-factorial the trait is (x-axis) for the given parameters under each of the three causal models. Rows of boxes represent different sample sizes, and columns of boxes represent how multi-factorial the DNAm sites are. The black dotted line depicts the location on the y-axis for detecting a single causal variant, drawn for convenience.
+
+
+## Summary
+
+In general the power to detect reverse causal DNAm associations greatly exceeds the power to detect forward causal DNAm associations when the trait is substantially more multi-factorial than each of the DNAm sites. Confounding associations typically are the least powered, though this assumes that each confounder has a small effect on $y$.
