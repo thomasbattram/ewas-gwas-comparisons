@@ -8,7 +8,6 @@
 args <- commandArgs(trailingOnly = TRUE)
 params_row <- as.numeric(args[1])
 traits_to_redo_file <- args[2]
-
 home_dir <- args[3]
 # home_dir <- "~/projects/epi_gen_comp" # CHANGE ME WHEN NEEDED
 
