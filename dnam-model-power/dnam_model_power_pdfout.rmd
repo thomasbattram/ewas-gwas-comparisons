@@ -1,5 +1,14 @@
 ---
-title: "Supplementary Information: Epigenome-wide association study architecture and power"
+title: |
+   | Supplementary Information 2
+   | A comparison of the genes and genesets identified by EWAS and GWAS of fourteen complex traits
+
+author: |
+  | Thomas Battram$^{1,}$$^2$^[Corresponding author: thomas.battram@bristol.ac.uk], Tom R. Gaunt$^{1,}$$^2$, Caroline L. Relton$^{1,}$$^2$, Nicholas J. Timpson$^{1,}$$^2$, Gibran Hemani$^{1,}$$^2$ 
+  | $^1$ MRC Integrative Epidemiology Unit, University of Bristol, UK
+  | $^2$ Population Health Sciences, Bristol Medical School, University of Bristol, UK
+
+csl: apa.csl
 
 output:
   bookdown::pdf_document2:
@@ -7,6 +16,7 @@ output:
       in_header: preamble.tex
     number_sections: False
     toc: True
+    keep_tex: True
 fig_caption: yes
 ---
 
