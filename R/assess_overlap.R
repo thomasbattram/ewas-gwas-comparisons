@@ -74,15 +74,50 @@ fin_auc_dat <- do.call(rbind, auc_dat)
 write.table(fin_auc_dat, file.path(home_dir, "report/report_data/auc_data.txt"), row.names = F, col.names = T, quote = F, sep = "\t")
 
 
-# b_p <- c("min_p", "max_beta")
-# auc_plot <- ggplot(dplyr::filter(fin_auc_dat, predictor %in% b_p), aes(x = trait, y = auc, colour = predictor)) +
-#   geom_point(position = position_dodge(width = 0.9)) +
-#   geom_linerange(aes(ymin = auc_ci_low, ymax = auc_ci_upper), position = position_dodge(width = 0.9)) +
-#   labs(x = bquote("Trait"), 
-#        y = "Area under the curve") +
-#   scale_y_continuous(limits = c(0.4, 1))
+beta <- c("max_beta")
+auc_res <- fin_auc_dat %>%
+	dplyr::filter(predictor == beta)
 
-# ggsave("results/temp/auc_scatter_minp.pdf", auc_plot)
+auc_range <- paste(comma(range(auc_res$auc)), collapse = "-")
+
+auc_plot <- ggplot(auc_res, aes(x = trait, y = auc)) +
+    geom_point(position = position_dodge(width = 0.9)) +
+    geom_linerange(aes(ymin = auc_ci_low, ymax = auc_ci_upper), position = position_dodge(width = 0.9)) +
+    labs(x = bquote("Trait"), 
+         y = "Area under the curve") +
+    scale_y_continuous(limits = c(0.2, 1)) + 
+    geom_hline(yintercept = 0.5, colour = "red", linetype = "dashed") + 
+    scale_x_discrete("Trait", labels = c("alcohol_consumption_per_day" = "AC",
+    									 "birthweight" = "BW", 
+  									   	 "body_mass_index" = "BMI",
+  									   	 "egfr" = "eGFR",
+                                         "urate" = "Urate",  
+  									   	 "cognitive_abilities:_digit_test" = "Cog",
+                                       	 "c-reactive_protein" = "CRP",  
+  									   	 "diastolic_blood_pressure" = "DBP", 
+  									   	 "systolic_blood_pressure" = "SBP", 
+  									   	 "educational_attainment" = "EA", 
+  									   	 "fev1" = "FEV1",
+  									   	 "former_versus_never_smoking" = "FsNs", 
+  									   	 "current_versus_never_smoking" = "CsNs", 
+  									   	 "fasting_glucose" = "Gluc", 
+  									   	 "insulin" = "Insulin")) +
+    theme_bw()
+
+ggsave("results/temp/auc-plot-1.pdf", auc_plot)
+
+# get n meth hits for paper
+ewas_hits_dat <- map_dfr(traits, function(trait) {
+	print(trait)
+	dat <- read_derived_data(trait = trait)
+	roc_all_dat <- generate_hit_dat(dat$gen, dat$meth)
+	out <- tibble(trait = trait, 
+				  n_hits = nrow(dat$meth), 
+				  n_regions = sum(roc_all_dat$hit), 
+				  )
+	return()
+})
+
 
 # -------------------------------------------------
 # What is the physical overlap?
